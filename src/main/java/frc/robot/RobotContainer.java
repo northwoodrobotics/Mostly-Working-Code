@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -11,11 +12,20 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.Button;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.subsystems.DrivetrainSubsystem;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import frc.ExternalLib.SpectrumLib.controllers.SpectrumXboxController;
+
 
 public class RobotContainer {
   private final DrivetrainSubsystem m_drivetrainSubsystem = new DrivetrainSubsystem();
 
-  private final XboxController m_controller = new XboxController(0);
+  public static final SpectrumXboxController m_controller = new SpectrumXboxController(0, 0.1, 0.1);
+  private static ShuffleboardTab master = Shuffleboard.getTab("master");
+
+
+ 
 
   public RobotContainer() {
     // Set up the default command for the drivetrain.
@@ -25,13 +35,16 @@ public class RobotContainer {
     // Right stick X axis -> rotation
     m_drivetrainSubsystem.setDefaultCommand(new DefaultDriveCommand(
             m_drivetrainSubsystem,
-            () -> -modifyAxis(m_controller.getLeftY()) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND,
-            () -> -modifyAxis(m_controller.getLeftX()) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND,
-            () -> -modifyAxis(m_controller.getRightX()) * DrivetrainSubsystem.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND
+            () -> -modifyAxis(m_controller.leftStick.getY()) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND,
+            () -> -modifyAxis(m_controller.leftStick.getX()) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND,
+            () -> -modifyAxis(m_controller.rightStick.getX()) * DrivetrainSubsystem.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND
     ));
 
     // Configure the button bindings
     configureButtonBindings();
+    ShowInputs();
+
+    
   }
 
   /**
@@ -42,10 +55,12 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
     // Back button zeros the gyroscope
-    new Button(m_controller::getBackButton)
+    m_controller.selectButton
             // No requirements because we don't need to interrupt anything
             .whenPressed(m_drivetrainSubsystem::zeroGyroscope);
   }
+
+  
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
@@ -77,5 +92,11 @@ public class RobotContainer {
     value = Math.copySign(value * value, value);
 
     return value;
+  }
+  
+  public void ShowInputs(){
+    master.addNumber("X Input", ()-> Units.metersToFeet(-modifyAxis(m_controller.leftStick.getX()) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND));
+    master.addNumber("Y Input", () -> Units.metersToFeet(-modifyAxis(m_controller.leftStick.getY()) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND));
+    master.addNumber("Rotation Input", ()->Units.radiansToDegrees(-modifyAxis(m_controller.rightStick.getX())* DrivetrainSubsystem.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND));
   }
 }
