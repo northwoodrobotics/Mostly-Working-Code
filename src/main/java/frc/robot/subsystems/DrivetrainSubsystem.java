@@ -22,8 +22,13 @@ import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import frc.ExternalLib.CitrusLib.CitrusConstants.SwerveConstants;
 import frc.ExternalLib.JackInTheBotLib.kinematics.SwerveOdometry;
 import frc.robot.Constants;
 
@@ -42,7 +47,7 @@ import static frc.robot.Constants.*;
 
 public class DrivetrainSubsystem extends SubsystemBase {
 
-        ArrayList<SwerveModule> swerveModules = new ArrayList<>(0, 1, 2, 3);
+     
   /**
    * The maximum voltage that will be delivered to the drive motors.
    * <p>
@@ -62,8 +67,14 @@ public class DrivetrainSubsystem extends SubsystemBase {
    */
 
   public SwerveDriveOdometry m_odometry;
+  public PathPlannerTrajectory path;
+
  
   private ChassisSpeeds m_chassisSpeeds = new ChassisSpeeds(0.0, 0.0, 0.0);
+ public  PIDController XController = new PIDController(AutoConstants.TRAJECTORYXkP, AutoConstants.TRAJECTORYXkI, AutoConstants.TRAJECTORYXkD);
+ public PIDController YController = new PIDController(AutoConstants.TRAJECTORYYkP, AutoConstants.TRAJECTORYYkI, AutoConstants.TRAJECTORYYkD);
+
+ public ProfiledPIDController thetaController = new ProfiledPIDController(AutoConstants.THETACONTROLLERkP, AutoConstants.THETACONTROLLERkI, AutoConstants.THETACONTROLLERkD, AutoConstants.THETACONTROLLERCONSTRAINTS);
 
 
 
@@ -79,6 +90,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
   private final AHRS m_navx = new AHRS(SPI.Port.kMXP, (byte) 200); // NavX connected over MXP
   //swerve kinematics
   private SwerveDriveKinematics m_kinematics = Constants.DriveConstants.KINEMATICS;
+  public SwerveModuleState[] states;
   //SwerveDrivePoseEstimator m_poseEstimator;
 
   private final SwerveModule m_frontLeftModule;
@@ -205,23 +217,48 @@ public class DrivetrainSubsystem extends SubsystemBase {
   public void drive(ChassisSpeeds chassisSpeeds) {
     m_chassisSpeeds = chassisSpeeds;
   }
+  public void setModuleStates(SwerveModuleState[] desiredStates) {
+        this.states = desiredStates;
+    }
+  public void setModuleStates(ChassisSpeeds chassisSpeeds) {
+          this.states = DriveConstants.KINEMATICS.toSwerveModuleStates(chassisSpeeds);
 
-  public void getPose(){
-          m_odometry.getPoseMeters();
+  
+ 
+        
+       
+}
+
+  public Pose2d getPose(){
+          return m_odometry.getPoseMeters();
   }
+  public Command createPathFollowCommand(PathPlannerTrajectory path, DrivetrainSubsystem subsystem){        
+        
+        PPSwerveControllerCommand swerveControllerCommand =
+        new PPSwerveControllerCommand(
+            path,
+            ()->getPose(), // Functional interface to feed supplier
+            Constants.DriveConstants.KINEMATICS,
+
+            // Position controllers
+            XController,
+            YController,
+            thetaController,
+            commandStates -> this.states = commandStates,
+            subsystem);
+    return swerveControllerCommand;
+ 
+     
+    }
 
 
 
 
   @Override
   public void periodic() {
-    SwerveModuleState[] states = m_kinematics.toSwerveModuleStates(m_chassisSpeeds);
-    SwerveDriveKinematics.desaturateWheelSpeeds(states, Constants.DriveConstants.MAX_FWD_REV_SPEED_MPS);
+  
 
-    m_frontLeftModule.set(states[0].speedMetersPerSecond / Constants.DriveConstants.MAX_FWD_REV_SPEED_MPS * Constants.DriveConstants.MAX_VOLTAGE, states[0].angle.getRadians());
-    m_frontRightModule.set(states[1].speedMetersPerSecond / Constants.DriveConstants.MAX_FWD_REV_SPEED_MPS * Constants.DriveConstants.MAX_VOLTAGE, states[1].angle.getRadians());
-    m_backLeftModule.set(states[2].speedMetersPerSecond / Constants.DriveConstants.MAX_FWD_REV_SPEED_MPS * Constants.DriveConstants.MAX_VOLTAGE, states[2].angle.getRadians());
-    m_backRightModule.set(states[3].speedMetersPerSecond / Constants.DriveConstants.MAX_FWD_REV_SPEED_MPS * Constants.DriveConstants.MAX_VOLTAGE, states[3].angle.getRadians());
+    
     
   }
 
