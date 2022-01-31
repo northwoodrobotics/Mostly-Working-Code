@@ -35,11 +35,14 @@ import com.swervedrivespecialties.swervelib.AbsoluteEncoder;
 
 
 import com.kauailabs.navx.frc.AHRS;
-
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.commands.PPSwerveControllerCommand;
 
 import static frc.robot.Constants.*;
 
 public class DrivetrainSubsystem extends SubsystemBase {
+
+        ArrayList<SwerveModule> swerveModules = new ArrayList<>(0, 1, 2, 3);
   /**
    * The maximum voltage that will be delivered to the drive motors.
    * <p>
@@ -207,6 +210,9 @@ public class DrivetrainSubsystem extends SubsystemBase {
           m_odometry.getPoseMeters();
   }
 
+
+
+
   @Override
   public void periodic() {
     SwerveModuleState[] states = m_kinematics.toSwerveModuleStates(m_chassisSpeeds);
@@ -220,7 +226,8 @@ public class DrivetrainSubsystem extends SubsystemBase {
   }
 
 
-  
+
+
 
 
 
