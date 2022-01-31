@@ -10,7 +10,9 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.Button;
-import frc.robot.commands.DefaultDriveCommand;
+import frc.robot.Constants.DriveConstants;
+import frc.robot.commands.TeleopDriveCommand;
+import frc.robot.commands.TeleopDriveCommand;
 import frc.robot.subsystems.DrivetrainSubsystem;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -33,11 +35,11 @@ public class RobotContainer {
     // Left stick Y axis -> forward and backwards movement
     // Left stick X axis -> left and right movement
     // Right stick X axis -> rotation
-    m_drivetrainSubsystem.setDefaultCommand(new DefaultDriveCommand(
+    m_drivetrainSubsystem.setDefaultCommand(new TeleopDriveCommand(
             m_drivetrainSubsystem,
-            () -> -modifyAxis(m_controller.leftStick.getY()) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND,
-            () -> -modifyAxis(m_controller.leftStick.getX()) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND,
-            () -> -modifyAxis(m_controller.rightStick.getX()) * DrivetrainSubsystem.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND
+            () -> -modifyAxis(m_controller.leftStick.getY()) * DriveConstants.MAX_FWD_REV_SPEED_MPS,
+            () -> -modifyAxis(m_controller.leftStick.getX()) * DriveConstants.MAX_FWD_REV_SPEED_MPS,
+            () -> -modifyAxis(m_controller.rightStick.getX()) * DriveConstants.MAX_FWD_REV_SPEED_MPS
     ));
 
     // Configure the button bindings
@@ -95,8 +97,8 @@ public class RobotContainer {
   }
   
   public void ShowInputs(){
-    master.addNumber("X Input", ()-> Units.metersToFeet(-modifyAxis(m_controller.leftStick.getX()) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND));
-    master.addNumber("Y Input", () -> Units.metersToFeet(-modifyAxis(m_controller.leftStick.getY()) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND));
-    master.addNumber("Rotation Input", ()->Units.radiansToDegrees(-modifyAxis(m_controller.rightStick.getX())* DrivetrainSubsystem.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND));
+    master.addNumber("X Input", ()-> Units.metersToFeet(-modifyAxis(m_controller.leftStick.getX()) * DriveConstants.MAX_FWD_REV_SPEED_MPS));
+    master.addNumber("Y Input", () -> Units.metersToFeet(-modifyAxis(m_controller.leftStick.getY()) * DriveConstants.MAX_FWD_REV_SPEED_MPS));
+    master.addNumber("Rotation Input", ()->Units.radiansToDegrees(-modifyAxis(m_controller.rightStick.getX())* DriveConstants.MAX_ROTATE_SPEED_RAD_PER_SEC));
   }
 }
